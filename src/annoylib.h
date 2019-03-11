@@ -1113,11 +1113,15 @@ protected:
       q.push(make_pair(Distance::template pq_initial_value<T>(), _roots[i]));
     }
 
+    size_t max_dcs = 512;
+    size_t dcs = 0;
+
     std::vector<S> nns;
     while (nns.size() < search_k && !q.empty()) {
       const pair<T, S>& top = q.top();
       T d = top.first;
       S i = top.second;
+
       Node* nd = _get(i);
       q.pop();
       if (nd->n_descendants == 1 && i < _n_items) {
@@ -1129,9 +1133,13 @@ protected:
         T margin = D::margin(nd, v, _f);
         q.push(make_pair(D::pq_distance(d, margin, 1), static_cast<S>(nd->children[1])));
         q.push(make_pair(D::pq_distance(d, margin, 0), static_cast<S>(nd->children[0])));
+        dcs += 2;
+      }
+      if (dcs + nns.size() >= max_dcs){
+          break;
       }
     }
-
+//    std::cout << nns.size() << " " << dcs << " "; //std::endl;
     // Get distances for all items
     // To avoid calculating distance multiple times for any items, sort by id
     sort(nns.begin(), nns.end());
@@ -1142,9 +1150,13 @@ protected:
       if (j == last)
         continue;
       last = j;
-      if (_get(j)->n_descendants == 1)  // This is only to guard a really obscure case, #284
+      if (_get(j)->n_descendants == 1) {  // This is only to guard a really obscure case, #284
         nns_dist.push_back(make_pair(D::distance(v_node, _get(j), _f), j));
+        dcs++;
+      }
+      if (dcs >= max_dcs) break;
     }
+//    std::cout << dcs << "\n";
 
     size_t m = nns_dist.size();
     size_t p = n < m ? n : m; // Return this many items

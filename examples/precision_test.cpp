@@ -9,6 +9,7 @@
 
 #include <iostream>
 #include <iomanip>
+#include <fstream>
 #include "../src/kissrandom.h"
 #include "../src/annoylib.h"
 #include <chrono>
@@ -17,37 +18,37 @@
 #include <random>
 
 
-int precision(int f=40, int n=1000000){
+int precision(const int f=128, const int n=100000){
 	std::chrono::high_resolution_clock::time_point t_start, t_end;
-
-	std::default_random_engine generator;
-	std::normal_distribution<double> distribution(0.0, 1.0);
+	size_t n_trees = 12;
+	size_t search_k = 400;
 
 	//******************************************************
 	//Building the tree
-	AnnoyIndex<int, double, Angular, Kiss32Random> t = AnnoyIndex<int, double, Angular, Kiss32Random>(f);
+	AnnoyIndex<int, float, Euclidean, Kiss32Random> t = AnnoyIndex<int, float, Euclidean, Kiss32Random>(f);
 
 	std::cout << "Building index ... be patient !!" << std::endl;
 	std::cout << "\"Trees that are slow to grow bear the best fruit\" (Moliere)" << std::endl;
-
-
-
-	for(int i=0; i<n; ++i){
-		double *vec = (double *) malloc( f * sizeof(double) );
-
-		for(int z=0; z<f; ++z){
-			vec[z] = (distribution(generator));
+	{
+		float vec[f];
+		std::ifstream base_input("../../data/SIFT100K/sift_base.fvecs", std::ios::binary);
+		uint32_t dim = 0;
+		for (size_t i = 0; i < n; i++) {
+			base_input.read((char *) &dim, sizeof(uint32_t));
+			if (dim != f) {
+				std::cout << "file error\n";
+				exit(1);
+			}
+			base_input.read((char *) vec, dim * sizeof(float));
+			t.add_item(i, vec);
+			std::cout << "Loading objects ...\t object: " << i + 1 << "\tProgress:" << std::fixed
+					  << std::setprecision(2) << (double) i / (double) (n + 1) * 100 << "%\r";
 		}
-
-		t.add_item(i, vec);
-
-		std::cout << "Loading objects ...\t object: "<< i+1 << "\tProgress:"<< std::fixed << std::setprecision(2) << (double) i / (double)(n + 1) * 100 << "%\r";
-
 	}
 	std::cout << std::endl;
-	std::cout << "Building index num_trees = 2 * num_features ...";
+	std::cout << "Building index num_trees = ...";
 	t_start = std::chrono::high_resolution_clock::now();
-	t.build(2 * f);
+	t.build(n_trees);
 	t_end = std::chrono::high_resolution_clock::now();
 	auto duration = std::chrono::duration_cast<std::chrono::seconds>( t_end - t_start ).count();
 	std::cout << " Done in "<< duration << " secs." << std::endl;
@@ -58,72 +59,51 @@ int precision(int f=40, int n=1000000){
 	std::cout << " Done" << std::endl;
 
 
-
 	//******************************************************
-	std::vector<int> limits = {10, 100, 1000, 10000};
-	int K=10;
-	int prec_n = 1000;
+	int K=1;
+	int prec_n = 10000;
 
-	std::map<int, double> prec_sum;
-	std::map<int, double> time_sum;
 	std::vector<int> closest;
 
-	//init precision and timers map
-	for(std::vector<int>::iterator it = limits.begin(); it!=limits.end(); ++it){
-		prec_sum[(*it)] = 0.0;
-		time_sum[(*it)] = 0.0;
+	float query[f*prec_n];
+	{
+		std::cout << " Load queries...\n";
+		std::ifstream query_input("../../data/SIFT100K/sift_query.fvecs", std::ios::binary);
+		for (size_t i = 0; i < prec_n; i++){
+			int dim = 0;
+			query_input.read((char *) &dim, sizeof(uint32_t));
+			if (dim != f) {
+				std::cout << "file error\n";
+				exit(1);
+			}
+			query_input.read((char *) (query + dim*i), dim * sizeof(float));
+		}
+	}
+	int gt[prec_n];
+	{
+		std::cout << " Load groundtruths...\n";
+		std::ifstream gt_input("../../data/sIFT100K/test_gt.ivecs", std::ios::binary);
+		for (size_t i = 0; i < prec_n; i++){
+			int dim = 0;
+			gt_input.read((char *) &dim, sizeof(uint32_t));
+			if (dim != K) {
+				std::cout << "file error\n";
+				exit(1);
+			}
+			gt_input.read((char *) (gt + dim*i), dim * sizeof(float));
+		}
 	}
 
 	// doing the work
+	t_start = std::chrono::high_resolution_clock::now();
+	int correct = 0;
 	for(int i=0; i<prec_n; ++i){
-
-		//select a random node
-		int j = rand() % n;
-
-		std::cout << "finding nbs for " << j << std::endl;
-
 		// getting the K closest
-		t.get_nns_by_item(j, K, n, &closest, nullptr);
-
-		std::vector<int> toplist;
-		std::vector<int> intersection;
-
-		for(std::vector<int>::iterator limit = limits.begin(); limit!=limits.end(); ++limit){
-
-			t_start = std::chrono::high_resolution_clock::now();
-			t.get_nns_by_item(j, (*limit), (size_t) -1, &toplist, nullptr); //search_k defaults to "n_trees * n" if not provided.
-			t_end = std::chrono::high_resolution_clock::now();
-			auto duration = std::chrono::duration_cast<std::chrono::milliseconds>( t_end - t_start ).count();
-
-			//intersecting results
-			std::sort(closest.begin(), closest.end(), std::less<int>());
-			std::sort(toplist.begin(), toplist.end(), std::less<int>());
-			intersection.resize(std::max(closest.size(), toplist.size()));
-			std::vector<int>::iterator it_set = std::set_intersection(closest.begin(), closest.end(), toplist.begin(), toplist.end(), intersection.begin());
-			intersection.resize(it_set-intersection.begin());
-
-			// storing metrics
-			int found = intersection.size();
-			double hitrate = found / (double) K;
-			prec_sum[(*limit)] += hitrate;
-
-			time_sum[(*limit)] += duration;
-
-
-			//deallocate memory
-			vector<int>().swap(intersection);
-			vector<int>().swap(toplist);
-		}
-
-		//print resulting metrics
-		for(std::vector<int>::iterator limit = limits.begin(); limit!=limits.end(); ++limit){
-			std::cout << "limit: " << (*limit) << "\tprecision: "<< std::fixed << std::setprecision(2) << (100.0 * prec_sum[(*limit)] / (i + 1)) << "% \tavg. time: "<< std::fixed<< std::setprecision(6) << (time_sum[(*limit)] / (i + 1)) * 1e-04 << "s" << std::endl;
-		}
-
-		closest.clear(); vector<int>().swap(closest);
-
+		t.get_nns_by_vector(query + f*i, K, search_k, &closest, nullptr);
+		correct += (int) (closest[i] == gt[i]);
 	}
-
+	t_end = std::chrono::high_resolution_clock::now();
+	std::cout << "Recall@1: " <<  correct << " Time: " << std::chrono::duration_cast<std::chrono::microseconds>( t_end - t_start ).count() / (float) prec_n << std::endl;
 	std::cout << "\nDone" << std::endl;
 	return 0;
 }
@@ -150,12 +130,12 @@ int main(int argc, char **argv) {
 
 
 	if(argc == 1){
-		f = 40;
-		n = 1000000;
+		f = 128;
+		n = 100000;
 
 		feedback(f,n);
 
-		precision(40, 1000000);
+		precision(f, n);
 	}
 	else if(argc == 3){
 
