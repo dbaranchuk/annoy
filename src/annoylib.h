@@ -763,7 +763,8 @@ public:
   AnnoyIndex(int f) : _f(f), _random() {
     _s = offsetof(Node, v) + _f * sizeof(T); // Size of each node
     _verbose = false;
-    _K = (S) (((size_t) (_s - offsetof(Node, children))) / sizeof(S)); // Max number of descendants to fit into node
+    //_K = (S) (((size_t) (_s - offsetof(Node, children))) / sizeof(S)); // Max number of descendants to fit into node
+    _K = 8;
     reinitialize(); // Reset everything
   }
   ~AnnoyIndex() {
@@ -1113,7 +1114,7 @@ protected:
       q.push(make_pair(Distance::template pq_initial_value<T>(), _roots[i]));
     }
 
-    size_t max_dcs = 512;
+    size_t max_dcs = 128;
     size_t dcs = 0;
 
     std::vector<S> nns;
@@ -1139,7 +1140,7 @@ protected:
           break;
       }
     }
-//    std::cout << nns.size() << " " << dcs << " "; //std::endl;
+    std::cout << nns.size() << " " << dcs << " "; //std::endl;
     // Get distances for all items
     // To avoid calculating distance multiple times for any items, sort by id
     sort(nns.begin(), nns.end());
@@ -1156,7 +1157,7 @@ protected:
       }
       if (dcs >= max_dcs) break;
     }
-//    std::cout << dcs << "\n";
+    std::cout << dcs << "\n";
 
     size_t m = nns_dist.size();
     size_t p = n < m ? n : m; // Return this many items

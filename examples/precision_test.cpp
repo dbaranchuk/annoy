@@ -20,8 +20,8 @@
 
 int precision(const int f=128, const int n=100000){
 	std::chrono::high_resolution_clock::time_point t_start, t_end;
-	size_t n_trees = 12;
-	size_t search_k = 400;
+	size_t n_trees = 2;
+	size_t search_k = 80;
 
 	//******************************************************
 	//Building the tree
@@ -82,7 +82,7 @@ int precision(const int f=128, const int n=100000){
 	int gt[prec_n];
 	{
 		std::cout << " Load groundtruths...\n";
-		std::ifstream gt_input("../../data/sIFT100K/test_gt.ivecs", std::ios::binary);
+		std::ifstream gt_input("../../data/SIFT100K/test_gt.ivecs", std::ios::binary);
 		for (size_t i = 0; i < prec_n; i++){
 			int dim = 0;
 			gt_input.read((char *) &dim, sizeof(uint32_t));
