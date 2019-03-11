@@ -1140,7 +1140,7 @@ protected:
           break;
       }
     }
-    std::cout << nns.size() << " " << dcs << " "; //std::endl;
+//    std::cout << nns.size() << " " << dcs << " "; //std::endl;
     // Get distances for all items
     // To avoid calculating distance multiple times for any items, sort by id
     sort(nns.begin(), nns.end());
@@ -1157,7 +1157,7 @@ protected:
       }
       if (dcs >= max_dcs) break;
     }
-    std::cout << dcs << "\n";
+//    std::cout << dcs << "\n";
 
     size_t m = nns_dist.size();
     size_t p = n < m ? n : m; // Return this many items
