@@ -64,8 +64,9 @@ int precision(const int f=128, const int n=100000){
 	int prec_n = 10000;
 
 	std::vector<int> closest;
-
+	std::cout << "TEST0\n";
 	float query[f*prec_n];
+	std::cout << "TEST0\n";
 	{
 		std::cout << " Load queries...\n";
 		std::ifstream query_input("../../rl_hnsw/notebooks/data/SIFT100K/sift_query.fvecs", std::ios::binary);

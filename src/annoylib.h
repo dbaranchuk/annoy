@@ -1102,7 +1102,6 @@ protected:
     Node* v_node = (Node *)malloc(_s); // TODO: avoid
     D::template zero_value<Node>(v_node);
     memcpy(v_node->v, v, sizeof(T) * _f);
-    std::cout << "TEST0\n";
     D::init_node(v_node, _f);
 
     std::priority_queue<pair<T, S> > q;
@@ -1114,7 +1113,6 @@ protected:
     for (size_t i = 0; i < _roots.size(); i++) {
       q.push(make_pair(Distance::template pq_initial_value<T>(), _roots[i]));
     }
-    std::cout << "TEST1\n";
 
     size_t max_dcs = 512;
     size_t dcs = 0;
@@ -1140,7 +1138,6 @@ protected:
       }
       if (dcs + nns.size() >= max_dcs) break;
     }
-    std::cout << "TEST2\n";
 //    std::cout << nns.size() << " " << dcs << " "; //std::endl;
     // Get distances for all items
     // To avoid calculating distance multiple times for any items, sort by id
