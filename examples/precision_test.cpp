@@ -31,7 +31,7 @@ int precision(const int f=128, const int n=100000){
 	std::cout << "\"Trees that are slow to grow bear the best fruit\" (Moliere)" << std::endl;
 	{
 		float vec[f];
-		std::ifstream base_input("../../data/SIFT100K/sift_base.fvecs", std::ios::binary);
+		std::ifstream base_input("../../rl_hnsw/notebooks/data/SIFT100K/sift_base.fvecs", std::ios::binary);
 		uint32_t dim = 0;
 		for (size_t i = 0; i < n; i++) {
 			base_input.read((char *) &dim, sizeof(uint32_t));
@@ -68,7 +68,7 @@ int precision(const int f=128, const int n=100000){
 	float query[f*prec_n];
 	{
 		std::cout << " Load queries...\n";
-		std::ifstream query_input("../../data/SIFT100K/sift_query.fvecs", std::ios::binary);
+		std::ifstream query_input("../../rl_hnsw/notebooks/data/SIFT100K/sift_query.fvecs", std::ios::binary);
 		for (size_t i = 0; i < prec_n; i++){
 			int dim = 0;
 			query_input.read((char *) &dim, sizeof(uint32_t));
@@ -82,7 +82,7 @@ int precision(const int f=128, const int n=100000){
 	uint32_t gt[prec_n];
 	{
 		std::cout << " Load groundtruths...\n";
-		std::ifstream gt_input("../../data/SIFT100K/test_gt.ivecs", std::ios::binary);
+		std::ifstream gt_input("../../rl_hnsw/notebooks/data/SIFT100K/test_gt.ivecs", std::ios::binary);
         uint32_t dim = 0;
 		for (size_t i = 0; i < prec_n; i++){
 			gt_input.read((char *) &dim, sizeof(uint32_t));
