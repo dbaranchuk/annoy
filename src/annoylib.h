@@ -1114,7 +1114,7 @@ protected:
       q.push(make_pair(Distance::template pq_initial_value<T>(), _roots[i]));
     }
 
-    size_t max_dcs = 128;
+    size_t max_dcs = 512;
     size_t dcs = 0;
 
     std::vector<S> nns;
