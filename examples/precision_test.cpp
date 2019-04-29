@@ -79,18 +79,18 @@ int precision(const int f=128, const int n=100000){
 			query_input.read((char *) (query + dim*i), dim * sizeof(float));
 		}
 	}
-	int gt[prec_n];
+	uint32_t gt[prec_n];
 	{
 		std::cout << " Load groundtruths...\n";
 		std::ifstream gt_input("../../data/SIFT100K/test_gt.ivecs", std::ios::binary);
+        uint32_t dim = 0;
 		for (size_t i = 0; i < prec_n; i++){
-			int dim = 0;
 			gt_input.read((char *) &dim, sizeof(uint32_t));
 			if (dim != K) {
 				std::cout << "file error\n";
 				exit(1);
 			}
-			gt_input.read((char *) (gt + dim*i), dim * sizeof(float));
+			gt_input.read((char *) (gt + dim*i), dim * sizeof(uint32_t));
 		}
 	}
 
