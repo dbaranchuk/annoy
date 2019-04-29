@@ -1134,7 +1134,7 @@ protected:
         T margin = D::margin(nd, v, _f);
         dcs++;
         q.push(make_pair(D::pq_distance(d, margin, 1), static_cast<S>(nd->children[1])));
-        q.push(make_pair(D::pq_distance(d, margin, 0), static_cast<S>(nd->children[0])))ж
+        q.push(make_pair(D::pq_distance(d, margin, 0), static_cast<S>(nd->children[0])));
       }
       if (dcs + nns.size() >= max_dcs) break;
 
